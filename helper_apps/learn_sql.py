@@ -1,11 +1,11 @@
 from datetime import datetime
 import uuid
-from nvflexible.tracker import create_app, db
+from nvflexible.application import create_app, db
 
 app = create_app("development")
 app.app_context().push()
 
-from nvflexible.tracker.models import (
+from nvflexible.application.models import (
     Certificate,
     Experiment,
     Participant,
@@ -18,7 +18,7 @@ from nvflexible.tracker.models import (
     VitalSignCustomField,
 )
 
-from nvflexible.tracker.managers import (
+from nvflexible.application.managers import (
     CertAdm,
     PlanAdm,
     StudyAdm,
