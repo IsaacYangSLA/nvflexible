@@ -1,5 +1,9 @@
 from fastapi import Header, HTTPException
 
+from . import crud, models, schemas
+from .store.database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
 
 def get_token_header(x_token: str = Header()):
     if x_token != "fake-super-secret-token":
@@ -21,4 +25,11 @@ def get_mandatory_headers(headers):
     if not pct:
         return None
     return (project, study, pct)
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 

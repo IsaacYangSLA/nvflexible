@@ -1,22 +1,27 @@
 import uuid
 from pprint import pprint
 
-from flask import Blueprint, jsonify, request
+from sqlalchemy.orm import Session
+
+from . import models, schemas
+
+
 
 from ..utils.cert_utils import SimpleCert
 from . import db
 from .models import Certificate, CustomField, Heartbeat, Plan, Submission, VitalSign
 
-submission = Blueprint("submission", __name__, url_prefix="/api/v1/submission")
-s3 = Blueprint("s3", __name__, url_prefix="/api/v1/s3")
-admin = Blueprint("admin", __name__, url_prefix="/api/v1/admin")
-routine = Blueprint("routine", __name__, url_prefix="/api/v1/routine")
+
+def get_user(db: Session, user_id: int):
+    return db.query(models.User).filter(models.User.id == user_id).first()
 
 
-class SQLStore:
-    def __init__(self):
-        pass
+def get_user_by_email(db: Session, email: str):
+    return db.query(models.User).filter(models.User.email == email).first()
 
+
+def get_users(db: Session, skip: int = 0, limit: int = 100):
+    return db.query(models.User).offset(skip).limit(limit).all()
 
 @submission.route("", methods=["GET", "POST"])
 def submit():

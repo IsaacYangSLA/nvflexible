@@ -2,15 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, DateTime
 from sqlalchemy.orm import relationship, backref
-from .database import Base
-
-# from sqlalchemy_mixins import AllFeaturesMixin
-
-######### Models #########
-# class BaseModel(Model, AllFeaturesMixin):
-#     __abstract__ = True
-#     pass
-
+from .store.database import Base
 
 parents_table = Table(
     "parents_table",
@@ -66,6 +58,8 @@ query, but good for monitoring/dashboard.
 
 
 class Submission(Base):
+    __tablename__ = "submissions"
+    
     id = Column(String(40), primary_key=True)
     pct_id = Column(Integer, ForeignKey("participant.id"), nullable=False)
     exp_id = Column(Integer, ForeignKey("experiment.id"), nullable=False)
@@ -88,6 +82,8 @@ class Submission(Base):
 
 
 class SubmissionCustomField(CustomFieldMixin, Base):
+    __tablename__ = "submission_custom_fields"
+
     sub_id = Column(Integer, ForeignKey("submission.id"), nullable=False)
 
     def asdict(self):
@@ -96,6 +92,8 @@ class SubmissionCustomField(CustomFieldMixin, Base):
 
 # One project has one sub-ca cert
 class Project(CommonMixin, Base):
+    __tablename__ = "projects"
+
     cert_id = Column(Integer, ForeignKey("certificate.id"), nullable=False)
     certificate = relationship("Certificate", lazy=True, uselist=False)
     studies = relationship("Study", lazy=True, backref="project")
@@ -106,6 +104,8 @@ class Project(CommonMixin, Base):
 
 
 class Study(CommonMixin, Base):
+    __tablename__ = "studies"
+
     project_id = Column(Integer, ForeignKey("project.id"), nullable=False)
     participants = relationship(
         "Participant", secondary=study_participant_table, lazy="subquery", backref=backref("studies", lazy=False)
@@ -120,12 +120,16 @@ class Study(CommonMixin, Base):
 
 
 class ParticipantRole(CommonMixin, Base):
+    __tablename__ = "participant_roles"
+
     pct_id = Column(Integer, ForeignKey("participant.id"), nullable=False)
     role = Column(String(10))
     exp_id = Column(Integer, ForeignKey("experiment.id"), nullable=False)
 
 
 class Experiment(CommonMixin, Base):
+    __tablename__ = "experiments"
+
     study_id = Column(Integer, ForeignKey("study.id"), nullable=False)
     plans = relationship("Plan", lazy=True, backref=backref("experiment"))
     blob_id = Column(String(40))
@@ -134,6 +138,8 @@ class Experiment(CommonMixin, Base):
 
 
 class Participant(CommonMixin, Base):
+    __tablename__ = "participants"
+
     cert_id = Column(Integer, ForeignKey("certificate.id"), nullable=False)
     certificate = relationship("Certificate", lazy=True, uselist=False)
     vital_signs = relationship("VitalSign", lazy=True, backref=backref("participant", uselist=False))
@@ -148,6 +154,8 @@ class Participant(CommonMixin, Base):
 # Tracker cert has to be pre-provisioned before running.
 # TODO: tools to generate such information to be inserted to 
 class Certificate(CommonMixin, Base):
+    __tablename__ = "certificates"
+
     fingerprint = Column(String(40), index=True)
     issuer = Column(String(25))
     subject = Column(String(25))
@@ -162,6 +170,8 @@ class Certificate(CommonMixin, Base):
 # Plan basically is the action for one experiment,
 # such as waiting, go, pause, resume, end
 class Plan(CommonMixin, Base):
+    __tablename__ = "plans"
+
     action = Column(String(10))
     effective_time = Column(DateTime, nullable=False, default=datetime.utcnow)
     exp_id = Column(Integer, ForeignKey("experiment.id"), nullable=False)
@@ -170,18 +180,22 @@ class Plan(CommonMixin, Base):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
+class VitalSign(Base):
+    __tablename__ = "vital_signs"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    participant_id = Column(Integer, ForeignKey("participant.id"), nullable=False)
+    custom_fields = relationship("VitalSignCustomField", lazy=True, backref=backref("vital_sign"))
+
+    def asdict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 class VitalSignCustomField(CustomFieldMixin, Base):
+    __tablename__ = "vital_sign_custom_fields"
+
     vital_sign_id = Column(Integer, ForeignKey("vital_sign.id"), nullable=False)
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
-
-class VitalSign(Base):
-    id = Column(Integer, primary_key=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    participant_id = Column(Integer, ForeignKey("participant.id"), nullable=False)
-    custom_field_list = relationship("VitalSignCustomField", lazy=True, backref=backref("vital_sign"))
-
-    def asdict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
