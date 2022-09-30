@@ -9,10 +9,8 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
-
-
 @router.get("/")
-async def read_submissions():
+def read_submissions():
     key_tuple = get_mandatory_headers(request.header)
     if not key_tuple:
         return jsonify({"status": "error"})
@@ -26,7 +24,7 @@ async def read_submissions():
 
 
 @router.post("/")
-async def add_submission():
+def add_submission():
     key_tuple = get_mandatory_headers(request.header)
     if not key_tuple:
         return jsonify({"status": "error"})
@@ -40,13 +38,13 @@ async def add_submission():
 
 
 @router.get("/{sub_id}/custom_fields")
-async def read_custom_fields(sub_id):
+def read_custom_fields(sub_id):
     custom_field = SubmissionManager.get_custom_field(sub_id)
     return jsonify({"status": "success", "custom_field": custom_field})
 
 
 @router.get("/{sub_id}/parents")
-async def read_parents(sub_id):
+def read_parents(sub_id):
     parent_list = SubmissionManager.get_parents(sub_id)
     return jsonify({"status": "success", "parent_list": parent_list})
 

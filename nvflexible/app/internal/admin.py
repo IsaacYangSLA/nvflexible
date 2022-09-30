@@ -1,16 +1,25 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from ..dependencies import get_token_header
+# from ..dependencies import get_mandatory_headers
+
+# router = APIRouter(
+#     prefix="/admin",
+#     tags=["admin"],
+#     dependencies=[Depends(get_mandatory_headers)],
+#     responses={404: {"description": "Not found"}},
+# )
 
 router = APIRouter(
     prefix="/admin",
-    tags=["admin"],
-    dependencies=[Depends(get_token_header)],
-    responses={404: {"description": "Not found"}},
+    tags=["admin"]
 )
 
+@router.get("/test")
+def testing():
+    return {"message": "Testing!"}
+
 @router.post("/provision")
-async def provision():
+def provision():
     req = request.json
     issuer = req.pop("issuer", None)
     subject = req.pop("subject", "")
@@ -24,14 +33,15 @@ async def provision():
         }
     )
 
+"""
 @router.get("/refresh")
-async def refresh():
+def refresh():
     SystemManager.init_backend()
     return jsonify({"status": "success"})
 
 
 @router.post("/plan")
-async def add_plan():
+def add_plan():
     req = request.json
     result = PlanManager.store_new_entry(**req)
     if result is None:
@@ -43,7 +53,7 @@ async def add_plan():
     tags=["custom"],
     responses={403: {"description": "Operation forbidden"}},
 )
-async def update_item(item_id: str):
+def update_item(item_id: str):
     if item_id != "plumbus":
         raise HTTPException(
             status_code=403, detail="You can only update the item: plumbus"
@@ -52,7 +62,7 @@ async def update_item(item_id: str):
 
    
 @router.post("/study")
-async def add_study():
+def add_study():
     headers = request.headers
     project = headers.get("X-Project")
     if not project:
@@ -65,7 +75,7 @@ async def add_study():
 
 
 @router.post("/seed")
-async def seed():
+def seed():
     req = request.json
     project = req.get("project")
     study = req.get("study")
@@ -76,3 +86,4 @@ async def seed():
     return jsonify({"status": "success", "project": result})
 
 
+"""

@@ -1,42 +1,44 @@
 from datetime import datetime
 
-from . import db
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, DateTime
+from sqlalchemy.orm import relationship, backref
+from .database import Base
 
 # from sqlalchemy_mixins import AllFeaturesMixin
 
 ######### Models #########
-# class BaseModel(db.Model, AllFeaturesMixin):
+# class BaseModel(Model, AllFeaturesMixin):
 #     __abstract__ = True
 #     pass
 
 
-parents_table = db.Table(
+parents_table = Table(
     "parents_table",
-    db.Column("parent_id", db.String(40), db.ForeignKey("submission.id")),
-    db.Column("child_id", db.String(40), db.ForeignKey("submission.id")),
+    Column("parent_id", String(40), ForeignKey("submission.id")),
+    Column("child_id", String(40), ForeignKey("submission.id")),
 )
 
 
-study_participant_table = db.Table(
+study_participant_table = Table(
     "study_participant_table",
-    db.Column("study_id", db.Integer, db.ForeignKey("study.id"), primary_key=True),
-    db.Column("participant_id", db.Integer, db.ForeignKey("participant.id"), primary_key=True),
+    Column("study_id", Integer, ForeignKey("study.id"), primary_key=True),
+    Column("participant_id", Integer, ForeignKey("participant.id"), primary_key=True),
 )
 
 
 class CommonMixin(object):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(25))
-    description = db.Column(db.String(256))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    id = Column(Integer, primary_key=True)
+    name = Column(String(25))
+    description = Column(String(256))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, onupdate=datetime.utcnow)
 
 
 class CustomFieldMixin(object):
-    id = db.Column(db.Integer, primary_key=True)
-    key_name = db.Column(db.String(25))
-    value_type = db.Column(db.String(25))
-    value_string = db.Column(db.String(25))
+    id = Column(Integer, primary_key=True)
+    key_name = Column(String(25))
+    value_type = Column(String(25))
+    value_string = Column(String(25))
 
     def __repr__(self):
         return str(self.asdict())
@@ -63,53 +65,53 @@ query, but good for monitoring/dashboard.
 """
 
 
-class Submission(db.Model):
-    id = db.Column(db.String(40), primary_key=True)
-    pct_id = db.Column(db.Integer, db.ForeignKey("participant.id"), nullable=False)
-    exp_id = db.Column(db.Integer, db.ForeignKey("experiment.id"), nullable=False)
-    state = db.Column(db.String(10), nullable=False)
-    blob_id = db.Column(db.String(40), index=True)
-    parents = db.relationship(
+class Submission(Base):
+    id = Column(String(40), primary_key=True)
+    pct_id = Column(Integer, ForeignKey("participant.id"), nullable=False)
+    exp_id = Column(Integer, ForeignKey("experiment.id"), nullable=False)
+    state = Column(String(10), nullable=False)
+    blob_id = Column(String(40), index=True)
+    parents = relationship(
         "Submission",
         secondary=parents_table,
         primaryjoin=id == parents_table.c.child_id,
         secondaryjoin=id == parents_table.c.parent_id,
         lazy=False,
-        backref=db.backref("children"),
+        backref=backref("children"),
     )
-    custom_field_list = db.relationship("SubmissionCustomField", lazy=True, backref=db.backref("submission"))
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    custom_field_list = relationship("SubmissionCustomField", lazy=True, backref=backref("submission"))
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, onupdate=datetime.utcnow)
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-class SubmissionCustomField(CustomFieldMixin, db.Model):
-    sub_id = db.Column(db.Integer, db.ForeignKey("submission.id"), nullable=False)
+class SubmissionCustomField(CustomFieldMixin, Base):
+    sub_id = Column(Integer, ForeignKey("submission.id"), nullable=False)
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 # One project has one sub-ca cert
-class Project(CommonMixin, db.Model):
-    cert_id = db.Column(db.Integer, db.ForeignKey("certificate.id"), nullable=False)
-    certificate = db.relationship("Certificate", lazy=True, uselist=False)
-    studies = db.relationship("Study", lazy=True, backref="project")
-    participants = db.relationship("Participant", lazy="dynamic", backref=db.backref("project", uselist=False))
+class Project(CommonMixin, Base):
+    cert_id = Column(Integer, ForeignKey("certificate.id"), nullable=False)
+    certificate = relationship("Certificate", lazy=True, uselist=False)
+    studies = relationship("Study", lazy=True, backref="project")
+    participants = relationship("Participant", lazy="dynamic", backref=backref("project", uselist=False))
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-class Study(CommonMixin, db.Model):
-    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
-    participants = db.relationship(
-        "Participant", secondary=study_participant_table, lazy="subquery", backref=db.backref("studies", lazy=False)
+class Study(CommonMixin, Base):
+    project_id = Column(Integer, ForeignKey("project.id"), nullable=False)
+    participants = relationship(
+        "Participant", secondary=study_participant_table, lazy="subquery", backref=backref("studies", lazy=False)
     )
-    blob_id = db.Column(db.String(40))
-    experiments = db.relationship("Experiment", lazy=True, backref=db.backref("study", uselist=False))
+    blob_id = Column(String(40))
+    experiments = relationship("Experiment", lazy=True, backref=backref("study", uselist=False))
 
     def asdict(self):
         base_dict = {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -117,26 +119,26 @@ class Study(CommonMixin, db.Model):
         return base_dict
 
 
-class ParticipantRole(CommonMixin, db.Model):
-    pct_id = db.Column(db.Integer, db.ForeignKey("participant.id"), nullable=False)
-    role = db.Column(db.String(10))
-    exp_id = db.Column(db.Integer, db.ForeignKey("experiment.id"), nullable=False)
+class ParticipantRole(CommonMixin, Base):
+    pct_id = Column(Integer, ForeignKey("participant.id"), nullable=False)
+    role = Column(String(10))
+    exp_id = Column(Integer, ForeignKey("experiment.id"), nullable=False)
 
 
-class Experiment(CommonMixin, db.Model):
-    study_id = db.Column(db.Integer, db.ForeignKey("study.id"), nullable=False)
-    plans = db.relationship("Plan", lazy=True, backref=db.backref("experiment"))
-    blob_id = db.Column(db.String(40))
-    participant_roles = db.relationship("ParticipantRole", lazy=True, backref=db.backref("experiment"))
-    submissions = db.relationship("Submission", lazy=True, backref=db.backref("experiment", uselist=False))
+class Experiment(CommonMixin, Base):
+    study_id = Column(Integer, ForeignKey("study.id"), nullable=False)
+    plans = relationship("Plan", lazy=True, backref=backref("experiment"))
+    blob_id = Column(String(40))
+    participant_roles = relationship("ParticipantRole", lazy=True, backref=backref("experiment"))
+    submissions = relationship("Submission", lazy=True, backref=backref("experiment", uselist=False))
 
 
-class Participant(CommonMixin, db.Model):
-    cert_id = db.Column(db.Integer, db.ForeignKey("certificate.id"), nullable=False)
-    certificate = db.relationship("Certificate", lazy=True, uselist=False)
-    vital_signs = db.relationship("VitalSign", lazy=True, backref=db.backref("participant", uselist=False))
-    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
-    submissions = db.relationship("Submission", lazy=True, backref=db.backref("participant", uselist=False))
+class Participant(CommonMixin, Base):
+    cert_id = Column(Integer, ForeignKey("certificate.id"), nullable=False)
+    certificate = relationship("Certificate", lazy=True, uselist=False)
+    vital_signs = relationship("VitalSign", lazy=True, backref=backref("participant", uselist=False))
+    project_id = Column(Integer, ForeignKey("project.id"), nullable=False)
+    submissions = relationship("Submission", lazy=True, backref=backref("participant", uselist=False))
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -144,14 +146,14 @@ class Participant(CommonMixin, db.Model):
 
 # Root CA does not change and must be pre-provisioned.
 # Tracker cert has to be pre-provisioned before running.
-# TODO: tools to generate such information to be inserted to DB.
-class Certificate(CommonMixin, db.Model):
-    fingerprint = db.Column(db.String(40), index=True)
-    issuer = db.Column(db.String(25))
-    subject = db.Column(db.String(25))
-    s_crt = db.Column(db.String(2000))
-    s_prv = db.Column(db.String(2000))
-    role = db.Column(db.String(10))
+# TODO: tools to generate such information to be inserted to 
+class Certificate(CommonMixin, Base):
+    fingerprint = Column(String(40), index=True)
+    issuer = Column(String(25))
+    subject = Column(String(25))
+    s_crt = Column(String(2000))
+    s_prv = Column(String(2000))
+    role = Column(String(10))
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
@@ -159,27 +161,27 @@ class Certificate(CommonMixin, db.Model):
 
 # Plan basically is the action for one experiment,
 # such as waiting, go, pause, resume, end
-class Plan(CommonMixin, db.Model):
-    action = db.Column(db.String(10))
-    effective_time = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    exp_id = db.Column(db.Integer, db.ForeignKey("experiment.id"), nullable=False)
+class Plan(CommonMixin, Base):
+    action = Column(String(10))
+    effective_time = Column(DateTime, nullable=False, default=datetime.utcnow)
+    exp_id = Column(Integer, ForeignKey("experiment.id"), nullable=False)
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-class VitalSignCustomField(CustomFieldMixin, db.Model):
-    vital_sign_id = db.Column(db.Integer, db.ForeignKey("vital_sign.id"), nullable=False)
+class VitalSignCustomField(CustomFieldMixin, Base):
+    vital_sign_id = Column(Integer, ForeignKey("vital_sign.id"), nullable=False)
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
-class VitalSign(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    participant_id = db.Column(db.Integer, db.ForeignKey("participant.id"), nullable=False)
-    custom_field_list = db.relationship("VitalSignCustomField", lazy=True, backref=db.backref("vital_sign"))
+class VitalSign(Base):
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    participant_id = Column(Integer, ForeignKey("participant.id"), nullable=False)
+    custom_field_list = relationship("VitalSignCustomField", lazy=True, backref=backref("vital_sign"))
 
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
