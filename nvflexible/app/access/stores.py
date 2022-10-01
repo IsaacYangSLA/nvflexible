@@ -5,8 +5,6 @@ from sqlalchemy.orm import Session
 
 from . import models, schemas
 
-
-
 from ..utils.cert_utils import SimpleCert
 from . import db
 from .models import Certificate, CustomField, Heartbeat, Plan, Submission, VitalSign

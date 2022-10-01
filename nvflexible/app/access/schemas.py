@@ -31,18 +31,44 @@ class Submission(SubmissionBase):
         orm_mode = True
 
 
+class Participant(CommonMixin, Base):
+    __tablename__ = "participants"
+
+    cert_id = Column(Integer, ForeignKey("certificate.id"), nullable=False)
+    certificate = relationship("Certificate", lazy=True, uselist=False)
+    vital_signs = relationship("VitalSign", lazy=True, backref=backref("participant", uselist=False))
+    project_id = Column(Integer, ForeignKey("project.id"), nullable=False)
+    submissions = relationship("Submission", lazy=True, backref=backref("participant", uselist=False))
+
+    def asdict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+
 class ParticipantBase(BaseModel):
     email: str
 
 
 class ParticipantCreate(ParticipantBase):
-    password: str
-
+    pass
 
 class Participant(ParticipantBase):
-    id: int
-    is_active: bool
-    items: list[Submission] = []
+    id : int
+    project_id : int
+    submission_ids: list[int] = []
+
+    class Config:
+        orm_mode = True
+
+class VitalSignCreate(BaseModel):
+    participant_id : int
+    custom_fields : dict(str, object) = dict()
+
+    class Config:
+        orm_mode = True
+
+class VitalSign(VitalSignCreate):
+    id : int
+    custom_fields : dict(str, object) = dict()
 
     class Config:
         orm_mode = True
