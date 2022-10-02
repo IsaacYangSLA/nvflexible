@@ -5,7 +5,7 @@ from sqlalchemy import pool
 
 from alembic import context
 
-from nvflexible.config import config as nvconfig
+# from nvflexible.config import config as nvconfig
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -40,9 +40,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    # url = config.get_main_option("sqlalchemy.url")
-    url = nvconfig.get("development").SQLALCHEMY_DATABASE_URI
-    print(url)
+    url = config.get_main_option("sqlalchemy.url")
+    # url = nvconfig.get("development").SQLALCHEMY_DATABASE_URI
     context.configure(
         url=url,
         target_metadata=target_metadata,

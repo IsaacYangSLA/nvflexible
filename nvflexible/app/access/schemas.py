@@ -1,8 +1,17 @@
 from typing import Union
-from xmlrpc.client import DateTime
+from datetime import datetime
 
 from pydantic import BaseModel
 
+class Dummy(BaseModel):
+    id : int
+    random_string : str
+
+    class Config:
+        orm_mode = True
+
+
+"""
 class SubmissionCustomField(BaseModel):
     id : int
     key_name : str
@@ -25,23 +34,10 @@ class Submission(SubmissionBase):
     id: int
     owner_id: int
     parents : list['Submission']
-    created_at : DateTime
-    updated_at : DateTime
+    created_at : datetime
+    updated_at : datetime
     class Config:
         orm_mode = True
-
-
-class Participant(CommonMixin, Base):
-    __tablename__ = "participants"
-
-    cert_id = Column(Integer, ForeignKey("certificate.id"), nullable=False)
-    certificate = relationship("Certificate", lazy=True, uselist=False)
-    vital_signs = relationship("VitalSign", lazy=True, backref=backref("participant", uselist=False))
-    project_id = Column(Integer, ForeignKey("project.id"), nullable=False)
-    submissions = relationship("Submission", lazy=True, backref=backref("participant", uselist=False))
-
-    def asdict(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class ParticipantBase(BaseModel):
@@ -61,14 +57,15 @@ class Participant(ParticipantBase):
 
 class VitalSignCreate(BaseModel):
     participant_id : int
-    custom_fields : dict(str, object) = dict()
+    custom_fields : dict[str, object] = dict()
 
     class Config:
         orm_mode = True
 
 class VitalSign(VitalSignCreate):
     id : int
-    custom_fields : dict(str, object) = dict()
+    custom_fields : dict[str, object] = dict()
 
     class Config:
         orm_mode = True
+"""

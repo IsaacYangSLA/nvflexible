@@ -2,8 +2,15 @@ from datetime import datetime
 
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Table, DateTime
 from sqlalchemy.orm import relationship, backref
-from .store.database import Base
+from .database import Base
 
+class Dummy(Base):
+    __tablename__ = "dummies"
+    
+    id = Column(Integer, primary_key=True)
+    random_string = Column(String(80), nullable=False)
+    
+"""
 parents_table = Table(
     "parents_table",
     Column("parent_id", String(40), ForeignKey("submission.id")),
@@ -37,6 +44,7 @@ class CustomFieldMixin(object):
 
 
 """
+"""
 clients are any participants talking to tracker via tracker's api
 
 Root CA -> tracker cert (role=server) + sub CA cert (role=subca)
@@ -57,6 +65,7 @@ query, but good for monitoring/dashboard.
 """
 
 
+"""
 class Submission(Base):
     __tablename__ = "submissions"
     
@@ -199,3 +208,4 @@ class VitalSignCustomField(CustomFieldMixin, Base):
     def asdict(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
+"""

@@ -1,6 +1,18 @@
+import uuid
+
 from sqlalchemy.orm import Session
 
-from . import models, schemas
+from . import models
+
+def get_dummy(db:Session):
+    return db.query(models.Dummy).all()
+
+def create_dummy(db:Session):
+    dummy_item = models.Dummy(random_string=str(uuid.uuid4()))
+    db.add(dummy_item)
+    db.commit()
+    db.refresh(dummy_item)
+    return dummy_item
 
 def hello(db:Session,id:int):
     return db.query(models.VitalSign).filter(models.VitalSign.id == id).first()

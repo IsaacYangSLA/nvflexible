@@ -4,9 +4,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-from ...config import config
+# from ...config import config
 
-SQLALCHEMY_DATABASE_URL = config.get("development").SQLALCHEMY_DATABASE_URI
+SQLALCHEMY_DATABASE_URL = "sqlite:////var/tmp/status.sqlite"
+# config.get("development").SQLALCHEMY_DATABASE_URI
 # SQLALCHEMY_DATABASE_URL = "postgresql://user:password@postgresserver/db"
 
 engine = create_engine(
